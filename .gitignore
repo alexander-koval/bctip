@@ -1,2 +1,11 @@
 *.mo
 *.pyc
+*.sqlite3
+
+bctip/local_settings.py
+bctip/settings.py
+
+Pipfile.lock
+
+.idea/
+/core/static/img/

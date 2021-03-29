@@ -1,10 +1,11 @@
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
+from django.utils.deprecation import MiddlewareMixin
 
-class FacebookFakeRootMiddleware(object):
+
+class FacebookFakeRootMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         ua = request.META.get('HTTP_USER_AGENT')
         if ua and "facebookexternalhit" in ua:
-            return render_to_response("index.html", context_instance=RequestContext(request, {}))
+            return render(request, "index.html", {})
         else:
             return response

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import json
-import urllib2
 from decimal import Decimal
+from urllib.request import urlopen
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from django.utils.translation import ugettext as _
+
 from jsonrpc import ServiceProxy
 
 BITCOIND = ServiceProxy(settings.BITCOIND_CONNECTION_STRING)
@@ -32,7 +33,7 @@ class Wallet(models.Model):
     ctime = models.DateTimeField(auto_now_add=True)
     # activation time (paid)
     atime = models.DateTimeField(null=True, blank=True)
-    ip = models.IPAddressField(null=True, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
     ua = models.CharField(max_length=255, null=True, blank=True)
     bcaddr = models.CharField(max_length=90)  # pay to
     bcaddr_from = models.CharField(
@@ -132,7 +133,7 @@ class Wallet(models.Model):
 
 
 class Address(models.Model):
-    wallet = models.ForeignKey(Wallet)
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
     country = models.CharField(max_length=64, default="USA")
     state = models.CharField(max_length=64, null=True, blank=True)
     address1 = models.CharField("Address line 1", max_length=64)
@@ -150,7 +151,7 @@ class Address(models.Model):
 
 class Tip(models.Model):
     wallet = models.ForeignKey(
-        Wallet, null=True, blank=True)
+        Wallet, null=True, blank=True, on_delete=models.CASCADE)
     key = models.CharField(max_length=64, null=True, blank=True)
     ctime = models.DateTimeField(
         auto_now_add=True, null=True, blank=True)
@@ -158,7 +159,7 @@ class Tip(models.Model):
     atime = models.DateTimeField(null=True, blank=True)
     # expiration
     etime = models.DateTimeField(null=True, blank=True)
-    ip = models.IPAddressField(null=True, blank=True)  # пока не исп
+    ip = models.GenericIPAddressField(null=True, blank=True)  # пока не исп
     ua = models.CharField(max_length=255, null=True, blank=True)  # user agent
     balance = models.BigIntegerField(
         blank=True, null=True, default=0)
@@ -221,10 +222,11 @@ def get_avg_rate_euro():
     rate = get_avg_rate()
     return int(rate*CURRENCY_RATES['EUR'])
 
+
 """
 def get_mtgox_avg_rate():
     try:
-        mtgox = urllib2.urlopen("https://data.mtgox.com/api/1/BTCUSD/ticker", timeout=5).read()
+        mtgox = urlopen("https://data.mtgox.com/api/1/BTCUSD/ticker", timeout=5).read()
         mtgox = json.loads(mtgox)
         return float(mtgox['return']['avg']['value'])
     except:
@@ -238,7 +240,7 @@ def get_btce_avg_rate(force=False):
     if rate and not force:
         return rate
     try:
-        btce = urllib2.urlopen(
+        btce = urlopen(
             "https://btc-e.com/api/2/btc_usd/ticker", timeout=4).read()
         btce = json.loads(btce)
         rate = float(btce['ticker']['avg'])
@@ -254,7 +256,7 @@ def get_coinbase_avg_rate(force=False):
     if rate and not force:
         return rate
     try:
-        coinbase = urllib2.urlopen(
+        coinbase = urlopen(
             "https://coinbase.com/api/v1/prices/buy", timeout=4).read()
         coinbase = json.loads(coinbase)
         rate = float(coinbase['total']['amount'])
@@ -270,7 +272,7 @@ def get_bitstamp_avg_rate(force=False):
     if rate and not force:
         return rate
     try:
-        bitstamp = urllib2.urlopen(
+        bitstamp = urlopen(
             "https://www.bitstamp.net/api/ticker/", timeout=4).read()
         bitstamp = json.loads(bitstamp)
         rate = int((float(bitstamp['high'])+float(bitstamp['low']))/2.0)

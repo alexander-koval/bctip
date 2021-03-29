@@ -1,36 +1,26 @@
 # -*- coding: utf-8 -*-
 import calendar
 import datetime
-import json
 import os
 import pickle
 import random
-import shutil
-import StringIO
 import time
-import urllib
-import zipfile
-from decimal import Decimal
+from io import StringIO
 
 import qrcode
+from django.core.mail import send_mail
+from django.db.models import Sum
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 
-from django.conf import settings
-#if settings.BCTIP_MOD:
+# if settings.BCTIP_MOD:
 #    from core.forms_custom import *
-#else:
+# else:
 from core.forms import *
-
 from core.models import *
 from core.tasks import celery_generate_pdf
-from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
-from django.core.mail import send_mail
-from django.core.urlresolvers import reverse
-from django.db.models import Sum
-from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render, render_to_response
-from django.template import Context, RequestContext, Template
-from django.utils.translation import ugettext as _
 
 BASE10 = '1234567890'
 BASE58 = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -89,7 +79,9 @@ def download(request, key, format, page_size="A4"):
             time.sleep(25)
         if i > 0:
             ctx = {'result': result.ready(), 'info': result.info}
-            return render_to_response("not_yet.html", context_instance=RequestContext(request, ctx))
+            # TODO CHECK THIS
+            return render(request, "not_yet.html", ctx)
+            # return render(request, "not_yet.html", context_instance=RequestContext(request, ctx))
         i += 1
 
     return HttpResponseRedirect(fn)
@@ -100,7 +92,7 @@ def new(request):
     key = get_random_key()
     src_site = 0
     ua = request.META.get('HTTP_USER_AGENT')
-    ip_ = request.META.get('HTTP_X_FORWARDED_FOR')
+    ip_ = request.META.get('HTTP_X_FORWARDED_FOR', '127.0.0.1')
     if ',' in ip_:
         ip_ = ip_.split(", ")[0]
     avg_rate = get_avg_rate()
@@ -315,7 +307,7 @@ def tip(request, key):
                 return HttpResponse("Timeout error")
             # just check
             if BITCOIND.getbalance(tip.wallet.get_account(), 5) < tip.balance_btc:
-                return render_to_response("not_enough.html", context_instance=RequestContext(request, {}))
+                return render(request, "not_enough.html", {})
             tip.atime = datetime.datetime.now()
             tip.activated = True
             tip.bcaddr = form.cleaned_data['bcaddr']
@@ -342,8 +334,7 @@ def tip(request, key):
         form = TipForm(initial=initial)
     ctx = {'tip': tip, 'rate': get_avg_rate(), 'form': form}
     template = "tip.html"
-    response = render_to_response(
-        template, context_instance=RequestContext(request, ctx))
+    response = render(request, template, ctx)
     if tip_bcaddr:
         response.set_cookie('tip_bcaddr', tip_bcaddr)
     return response
@@ -391,6 +382,5 @@ def tips_example(request):
     ctx = {
         'tip': tip, 'rate': get_avg_rate(), 'form': form, "tips_example": True}
     template = "tip.html"
-    response = render_to_response(
-        template, context_instance=RequestContext(request, ctx))
+    response = render(request, template, ctx)
     return response

@@ -1,5 +1,8 @@
-import sys, os
+import os
+import sys
+
 from jsonrpc import ServiceHandler
+
 
 class CGIServiceHandler(ServiceHandler):
     def __init__(self, service):
@@ -19,7 +22,7 @@ class CGIServiceHandler(ServiceHandler):
         try:
             contLen=int(env['CONTENT_LENGTH'])
             data = fin.read(contLen)
-        except Exception, e:
+        except Exception as e:
             data = ""
 
         resultData = ServiceHandler.handleRequest(self, data)

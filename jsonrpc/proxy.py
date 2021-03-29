@@ -1,4 +1,3 @@
-
 """
   Copyright (c) 2007 Jan-Klaas Kollhof
 
@@ -19,31 +18,40 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import urllib
-from jsonrpc.json import dumps, loads
+from json import dumps
+
+import requests
+
 
 class JSONRPCException(Exception):
-    def __init__(self, rpcError):
+    def __init__(self, rpc_error):
         Exception.__init__(self)
-        self.error = rpcError
-        
+        self.error = rpc_error
+
+
 class ServiceProxy(object):
-    def __init__(self, serviceURL, serviceName=None):
-        self.__serviceURL = serviceURL
-        self.__serviceName = serviceName
+    def __init__(self, service_url, service_name=None):
+        self.__service_url = service_url
+        self.__service_name = service_name
 
     def __getattr__(self, name):
-        if self.__serviceName != None:
-            name = "%s.%s" % (self.__serviceName, name)
-        return ServiceProxy(self.__serviceURL, name)
+        if self.__service_name is not None:
+            name = "%s.%s" % (self.__service_name, name)
+        return ServiceProxy(self.__service_url, name)
 
     def __call__(self, *args):
-         postdata = dumps({"method": self.__serviceName, 'params': args, 'id':'jsonrpc'})
-         respdata = urllib.urlopen(self.__serviceURL, postdata).read()
-         resp = loads(respdata)
-         if resp['error'] != None:
-             raise JSONRPCException(resp['error'])
-         else:
-             return resp['result']
-         
-
+        post_data = dumps({"method": self.__service_name, 'params': args, 'id': 'jsonrpc'})
+        headers = {'Content-Type': "application/json"}
+        payload = "{\"id\": \"jsonrpc\", \"jsonrpc\":\"1.0\",\"method\":\"%s\",\"params\":%s}" % (
+            self.__service_name, list(args))
+        # payload = "{\"jsonrpc\":\"1.0\", \"method\": {}, \"params\": {}}".format(self.__service_name, args)
+        print(payload)
+        response = requests.request("POST", self.__service_url, data=payload, headers=headers)
+        # resp_data = request.urlopen(self.__service_url, post_data.encode('utf-8')).read()
+        # resp = loads(resp_data)
+        resp = response.json()
+        print(resp)
+        if resp['error'] is not None:
+            raise JSONRPCException(resp['error'])
+        else:
+            return resp['result']
