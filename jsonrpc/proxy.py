@@ -17,7 +17,7 @@
   along with this software; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-
+import json
 from json import dumps
 
 import requests
@@ -42,8 +42,8 @@ class ServiceProxy(object):
     def __call__(self, *args):
         post_data = dumps({"method": self.__service_name, 'params': args, 'id': 'jsonrpc'})
         headers = {'Content-Type': "application/json"}
-        payload = "{\"id\": \"jsonrpc\", \"jsonrpc\":\"1.0\",\"method\":\"%s\",\"params\":%s}" % (
-            self.__service_name, list(args))
+        payload = "{\"jsonrpc\":\"1.0\",\"method\":\"%s\",\"params\":%s}" % (
+            self.__service_name, json.dumps(list(args)))
         # payload = "{\"jsonrpc\":\"1.0\", \"method\": {}, \"params\": {}}".format(self.__service_name, args)
         print(payload)
         response = requests.request("POST", self.__service_url, data=payload, headers=headers)

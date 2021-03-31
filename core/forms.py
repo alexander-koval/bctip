@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
-from django import forms
-from core.models import *
 import re
+
+from django import forms
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
-from django.conf import settings
+
+from core.models import *
 
 CURRENCIES = (('USD', 'USD'), ('EUR', 'EUR'), ('GBP', 'GBP'))
 TARGET_LANGUAGES = settings.LANGUAGES
 DIVIDE_BY = (("1", "1"), ("2", "2"), ("5", "5"), ("10", "10"),
              ("25", "25"), ("50", "50"), ("100", "100"))
 QUANTITY = (("5", "5"), ("10", "10"), ("20", "20"), ("30", "30"))
-PRICE = (("0", "0%"), ("5", "5%"),  ("10", "10%"))
+PRICE = (("0", "0%"), ("5", "5%"), ("10", "10%"))
 TEMPLATES = (('001-original', _l('Original')),)
 EXPIRATIONS = (("30", "30 days"), ("90", "3 months"),
-                   ("180", "6 months"), ("365", "1 year"))
+               ("180", "6 months"), ("365", "1 year"))
 
 def prim():
     return _l('Nice Label')+', 0.0001 BTC'
+
 
 class TipForm(forms.Form):
     bcaddr = forms.CharField(max_length=90, required=True, label=_("Send to"), widget=forms.TextInput(
@@ -38,7 +41,7 @@ class TipForm(forms.Form):
 
 
 class WalletForm(forms.Form):
-    bcaddr_from = forms.CharField(max_length=34, required=True, label=_(
+    bcaddr_from = forms.CharField(max_length=44, required=True, label=_(
         "Your Address"), widget=forms.TextInput)  # (attrs={'size':'34', 'style':'width:240px'})
     divide_currency = forms.ChoiceField(
         choices=CURRENCIES, widget=forms.Select())

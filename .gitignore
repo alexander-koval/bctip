@@ -1,6 +1,7 @@
 *.mo
 *.pyc
 *.sqlite3
+*.env
 
 bctip/local_settings.py
 bctip/settings.py
@@ -9,3 +10,4 @@ Pipfile.lock
 
 .idea/
 /core/static/img/
+/core/templates-odt/
