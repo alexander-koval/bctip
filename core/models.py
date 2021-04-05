@@ -84,7 +84,7 @@ class Wallet(models.Model):
     @property
     def balance_btc(self):
         if self.balance:
-            return self.balance/100000000.0 or None  # 1e8
+            return self.balance / 100000000.0 or None  # 1e8
         else:
             return None
 
@@ -97,11 +97,11 @@ class Wallet(models.Model):
 
     @property
     def txfee_float(self):
-        return round(self.fee_float*3, 6)
+        return round(self.fee_float * 3, 6)
 
     @property
     def invoice_btc(self):
-        if self.invoice != None:
+        if self.invoice is not None:
             return self.invoice / 100000000.0  # 1e8
         else:
             return None
@@ -168,7 +168,7 @@ class Tip(models.Model):
     comment_time = models.DateTimeField(null=True, blank=True)
     activated = models.BooleanField(default=False)
     expired = models.BooleanField(default=False)
-    bcaddr = models.CharField(max_length=90, null=True, blank=True)
+    bcaddr = models.CharField(max_length=300, null=True, blank=True)  # TODO DEPRECATED
     txid = models.CharField(max_length=64, null=True, blank=True)
     # tip page visit counter
     times = models.IntegerField(null=True, blank=True, default=0)
@@ -203,8 +203,39 @@ class Tip(models.Model):
     @property
     def balance_fiat(self):
         fiat = Decimal(self.balance_usd) * \
-            Decimal(CURRENCY_RATES[self.wallet.divide_currency])
+               Decimal(CURRENCY_RATES[self.wallet.divide_currency])
         return round(fiat, 2)
+
+
+class Payment(models.Model):
+    wallet = models.ForeignKey(
+        Wallet, null=True, blank=True, on_delete=models.CASCADE)
+    checking_id = models.CharField(max_length=90)
+    payment_request = models.CharField(max_length=90)
+    payment_hash = models.CharField(max_length=90)
+    memo = models.TextField(null=True, blank=True)
+    amount = models.IntegerField(default=0)
+    fee = models.IntegerField(default=0)
+    preimage = models.CharField(max_length=90)
+    pending = models.BooleanField(default=True)
+    extra = models.JSONField(blank=True, null=True)
+    webhook = models.CharField(max_length=90, blank=True, null=True)
+
+    @property
+    def msat(self) -> int:
+        return self.amount
+
+    @property
+    def sat(self) -> int:
+        return self.amount // 1000
+
+    @property
+    def is_in(self) -> bool:
+        return self.amount > 0
+
+    @property
+    def is_out(self) -> bool:
+        return self.amount < 0
 
 
 def get_avg_rate():
@@ -220,7 +251,7 @@ def get_avg_rate():
 
 def get_avg_rate_euro():
     rate = get_avg_rate()
-    return int(rate*CURRENCY_RATES['EUR'])
+    return int(rate * CURRENCY_RATES['EUR'])
 
 
 """
@@ -244,7 +275,7 @@ def get_btce_avg_rate(force=False):
             "https://btc-e.com/api/2/btc_usd/ticker", timeout=4).read()
         btce = json.loads(btce)
         rate = float(btce['ticker']['avg'])
-        cache.set(key, rate, 60*60)  # cache for an hour
+        cache.set(key, rate, 60 * 60)  # cache for an hour
         return rate
     except:
         return None
@@ -260,7 +291,7 @@ def get_coinbase_avg_rate(force=False):
             "https://coinbase.com/api/v1/prices/buy", timeout=4).read()
         coinbase = json.loads(coinbase)
         rate = float(coinbase['total']['amount'])
-        cache.set(key, rate, 60*60)  # cache for an hour
+        cache.set(key, rate, 60 * 60)  # cache for an hour
         return rate
     except:
         return None
@@ -275,17 +306,21 @@ def get_bitstamp_avg_rate(force=False):
         bitstamp = urlopen(
             "https://www.bitstamp.net/api/ticker/", timeout=4).read()
         bitstamp = json.loads(bitstamp)
-        rate = int((float(bitstamp['high'])+float(bitstamp['low']))/2.0)
-        cache.set(key, rate, 60*60)  # cache for an hour
+        rate = int((float(bitstamp['high']) + float(bitstamp['low'])) / 2.0)
+        cache.set(key, rate, 60 * 60)  # cache for an hour
         return rate
     except:
         return None
 
+
 def get_est_fee(force=False):
+    return float(0)
     key = 'est_fee'
     fee = cache.get(key)
     if not fee or force:
-        fee = BITCOIND.estimatesmartfee(6*24)['feerate']
-        fee = round(fee/3, 8)
-        cache.set(key, fee, 60*60)
+        fee = BITCOIND.estimatesmartfee(6 * 24)['feerate']
+        fee = round(fee / 3, 8)
+        cache.set(key, fee, 60 * 60)
     return fee
+
+# http://127.0.0.1:8000/ru/w/57W68phEpNUgoJtUXTk8tLsnCSpDCziiq/

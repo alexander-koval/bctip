@@ -20,6 +20,11 @@ environs = "*"
 celery = ">=4.2"
 django-celery-results = "*"
 django-redis = "*"
+lnurl = "*"
+shortuuid = "*"
+bitstring = "*"
+ecdsa = "*"
+django-celery-beat = "*"
 
 [requires]
 python_version = "3.9"

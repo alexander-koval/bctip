@@ -2,7 +2,6 @@
 import re
 
 from django import forms
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy as _l
 
@@ -23,29 +22,29 @@ def prim():
 
 
 class TipForm(forms.Form):
-    bcaddr = forms.CharField(max_length=90, required=True, label=_("Send to"), widget=forms.TextInput(
-        attrs={'size': '90', 'placeholder': _l('Enter bitcoin address here'), 'style': 'border:1px solid red'}))
+    bcaddr = forms.CharField(max_length=300, required=True, label=_("Send to"), widget=forms.TextInput(
+        attrs={'size': '300', 'placeholder': _l('Enter bitcoin address here'), 'style': 'border:1px solid red'}))
     bcamount = forms.CharField(required=False, help_text="all at the moment", widget=forms.TextInput(
         attrs={'readonly': 'readonly', 'class': 'disabled'}))
 
     def clean_bcaddr(self):
         bcaddr = self.cleaned_data['bcaddr']
-        if len(bcaddr) < 30:
+        if len(bcaddr) < 249:
             raise forms.ValidationError(_('Your address seems too short'))
         if not re.match("^[A-Za-z0-9_-]*$", bcaddr):
             raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
-        valid = BITCOIND.validateaddress(bcaddr)['isvalid']
-        if not valid:
-            raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
+        # valid = BITCOIND.validateaddress(bcaddr)['isvalid']
+        # if not valid:
+        #     raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
         return bcaddr
 
 
 class WalletForm(forms.Form):
-    bcaddr_from = forms.CharField(max_length=44, required=True, label=_(
-        "Your Address"), widget=forms.TextInput)  # (attrs={'size':'34', 'style':'width:240px'})
+    # bcaddr_from = forms.CharField(max_length=44, label=_(
+    #     "Your Address"), widget=forms.TextInput)  # (attrs={'size':'34', 'style':'width:240px'})
     divide_currency = forms.ChoiceField(
         choices=CURRENCIES, widget=forms.Select())
-    #target_language = forms.ChoiceField(choices=TARGET_LANGUAGES)
+    # target_language = forms.ChoiceField(choices=TARGET_LANGUAGES)
     divide_by = forms.ChoiceField(
         widget=forms.Select, choices=DIVIDE_BY, initial=2)
     quantity = forms.ChoiceField(widget=forms.Select, choices=QUANTITY)
@@ -70,18 +69,19 @@ class WalletForm(forms.Form):
         widget=forms.Select, choices=EXPIRATIONS, initial="30")
 
     def clean_bcaddr_from(self):
-        bcaddr_from = self.cleaned_data['bcaddr_from']
-        if len(bcaddr_from) < 32:
-            raise forms.ValidationError(_('Your address seems too short'))
-        if not re.match("^[A-Za-z0-9_-]*$", bcaddr_from):
-            raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
-        try:
-            valid = BITCOIND.validateaddress(bcaddr_from)['isvalid']
-        except:
-            raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
-        if not valid:
-            raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
-        return bcaddr_from
+        return ""
+        # bcaddr_from = self.cleaned_data['bcaddr_from']
+        # if len(bcaddr_from) < 44:
+        #     raise forms.ValidationError(_('Your address seems too short'))
+        # if not re.match("^[A-Za-z0-9_-]*$", bcaddr_from):
+        #     raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
+        # try:
+        #     valid = BITCOIND.validateaddress(bcaddr_from)['isvalid']
+        # except:
+        #     raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
+        # if not valid:
+        #     raise forms.ValidationError(_('Must be a valid Bitcoin Address'))
+        # return bcaddr_from
 
     def clean_divide_by(self):
         d = self.cleaned_data['divide_by']

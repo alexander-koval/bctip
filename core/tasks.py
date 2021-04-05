@@ -1,6 +1,4 @@
-#import webodt
 import shutil
-# from webodt.converters import converter
 import subprocess
 import zipfile
 from io import StringIO, BytesIO
@@ -11,8 +9,9 @@ from django.template import Context, Template
 from django.utils.translation import activate
 
 from bctip import settings
+from bctip.local_settings import WALLET
 from core.celery import app
-from core.models import CURRENCY_SIGNS, Tip, Wallet
+from core.models import CURRENCY_SIGNS, Tip, Wallet, Payment
 
 
 def odt_template(fn, ctx, page_size="A4"):
@@ -23,12 +22,12 @@ def odt_template(fn, ctx, page_size="A4"):
         out = inp.read(zi.filename)
         if zi.filename == 'content.xml':  # waut for the only interesting file
             # un-escape the quotes (in filters etc.)
-            t = Template(out.replace('&quot;', '"'))
-            out = t.render(ctx).encode('utf8')
+            t = Template(out.replace(b'&quot;', b'"'))
+            out = t.render(ctx)
             if page_size == "US" and zi.filename == 'styles.xml':
                 t = Template(out.replace('style:page-layout-properties fo:page-width="297mm" fo:page-height="210.01mm"',
                                          'style:page-layout-properties fo:page-width="279.4mm" fo:page-height="215.9mm"'))
-                out = t.render(ctx).encode('utf8')
+                out = t.render(ctx)
             output.writestr(zi.filename, out)
     output.close()
     content = outs.getvalue()
@@ -66,13 +65,13 @@ def celery_generate_pdf(wallet_id):
 
     # odt
     fn = settings.PROJECT_DIR + "/static/odt/tips-%s.odt" % wallet.key
-    f = open(fn, 'w')
-    f.write(document.decode('utf-8'))
+    f = open(fn, 'wb')
+    f.write(document)
     f.close()
 
     fn = settings.PROJECT_DIR + "/static/odt/tips-us-%s.odt" % wallet.key
-    f = open(fn, 'w')
-    f.write(document_us.decode('utf-8'))
+    f = open(fn, 'wb')
+    f.write(document_us)
     f.close()
 
     # pdf
@@ -107,3 +106,19 @@ def qrcode_img(text):
     img.save(output, "PNG")
     c = output.getvalue()
     return c
+
+
+async def invoice_listener():
+    async for checking_id in WALLET.paid_invoices_stream():
+        invoice_callback_dispatcher(checking_id)
+
+
+def invoice_callback_dispatcher(checking_id: str):
+    try:
+        payment = Payment.objects.get(checkint_id=checking_id)
+        if payment.is_in:
+            print("Payment pending = False")
+            payment.pending = False
+            payment.save()
+    except Payment.DoesNotExist:
+        pass

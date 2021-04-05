@@ -16,13 +16,14 @@ urlpatterns = i18n_patterns(
     url(r'^(?P<key>\w+-\w+-\w+)$', views.tip_redir, name='tip_redir'),
     url(r'^(?P<key>\w+-\w+-\w+)/$', views.tip, name='tip'),
     url(r'^gratuity-example/$', views.tips_example, name='tips_example'),
-    url(r'^w/(?P<key>\w+)/$', views.wallet, name='wallet'),
+    url(r'^w/(?P<key>\w+)/$', views.get_wallet, name='wallet'),
     url(r'^w/(?P<key>\w+)/comments/$', views.comments, name='comments'),
     url(r'^w/(?P<key>\w+)/pdf/$', views.download, {'format': "pdf"}, name='download'),
     url(r'^w/(?P<key>\w+)/pdf-us/$', views.download, {'format': "pdf", "page_size": "US"}, name='download'),
     url(r'^w/(?P<key>\w+)/odt/$', views.download, {'format': "odt"}, name='download'),
     url(r'^w/(?P<key>\w+)/png/$', views.download, {'format': "png"}, name='download'),
     url(r'^w/(?P<key>\w+)/wajax/$', views.wajax, name='wajax'),
+    url(r'^w/(?P<key>\w+)/ajax/invoice/$', views.ajax_lightning_invoice, name='ajax_invoice'),
 )
 
 urlpatterns += [
