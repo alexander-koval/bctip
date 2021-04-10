@@ -4,10 +4,12 @@ import json
 from decimal import Decimal
 from urllib.request import urlopen
 
+import shortuuid
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 from django.utils.translation import ugettext as _
+from lnurl import Lnurl, LnurlWithdrawResponse, encode as lnurl_encode
 
 from jsonrpc import ServiceProxy
 
@@ -108,7 +110,7 @@ class Wallet(models.Model):
 
     @property
     def bcaddr_uri(self):
-        return "bitcoin:%s?amount=%s&label=bctip.org" % (
+        return "lightning:%s?amount=%s&label=bctip.org" % (
             self.bcaddr, self.invoice_btc)
 
     @property
@@ -236,6 +238,53 @@ class Payment(models.Model):
     @property
     def is_out(self) -> bool:
         return self.amount < 0
+
+
+class WithdrawLink(models.Model):
+    # uuid = models.CharField(max_length=90)
+    wallet = models.ForeignKey(Wallet, null=True, blank=True, on_delete=models.SET_NULL)
+    title = models.CharField(max_length=255)
+    min_withdrawable = models.IntegerField()
+    max_withdrawable = models.IntegerField()
+    uses = models.IntegerField()
+    wait_time = models.IntegerField()
+    is_unique = models.BooleanField()
+    unique_hash = models.TextField()
+    k1 = models.TextField()
+    open_time = models.IntegerField()
+    used = models.IntegerField(default=0)
+    uses_csv = models.TextField()
+    number = 0
+
+    @property
+    def is_spent(self) -> bool:
+        return self.used >= self.uses
+
+    @property
+    def lnurl(self) -> Lnurl:
+        if self.is_unique:
+            uses_csv = self.uses_csv.split(",")
+            to_hash = self.unique_hash + uses_csv[self.number]
+            multi_hash = shortuuid.uuid(name=to_hash)
+            # TODO url_for()
+            url = f"withdraw.lnurl_multi_response?" \
+                  f"unique_hash={self.unique_hash},id_unique_hash={multi_hash}"
+        else:
+            url = f"withdraw.lnurl_response?" \
+                  f"unique_hash={self.unique_hash}"
+        full_url = "https://127.0.0.1:8443/en/" + url
+        return lnurl_encode(full_url)
+
+    @property
+    def lnurl_response(self):
+        url = f"withdraw.lnurl_callback?unique_hash={self.unique_hash}"
+        return LnurlWithdrawResponse(
+            callback=url,
+            k1=self.k1,
+            min_withdrawable=self.min_withdrawable * 1000,
+            max_withdrawable=self.max_withdrawable * 1000,
+            default_description=self.title
+        )
 
 
 def get_avg_rate():
