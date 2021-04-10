@@ -15,7 +15,7 @@
 <h2 class="ui header">{% trans "Tip has been activated" %}</h2>
 
 
-<div class="ui warning message">
+    <div class="ui warning message" style="word-wrap: break-word">
 {% trans "Tip activation time" %}: {{tip.atime}}<br/>
 {% trans "Tip was sent to address" %}: <b>{{tip.bcaddr}}</b><br/>
 {% trans "Transaction ID" %}: <a href="https://blockchain.info/tx/{{tip.txid}}" target="_blank">{{tip.txid|truncatechars:31}}</a><br/>

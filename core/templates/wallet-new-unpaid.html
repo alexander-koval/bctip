@@ -18,46 +18,48 @@
 
 {% localize off %}
 
-<div class="ui two column stackable grid">
+    <div class="ui two column stackable grid">
 
-<div class="column">
-<div class="ui large message">
-Bitstamp {% trans "rate" %}: {{wallet.rate}}<br/>
-{% if wallet.divide_by %}
-{% trans "Value" %}: {{wallet.divide_currency_sign}}{{wallet.divide_by|floatformat:"0"}}, 
-{% trans "Quantity" %}: {{wallet.quantity}}<br/>
-{% endif %}
-{% trans "Donation to" %} bctip: {{wallet.price|floatformat:"0"}}%
-{% if wallet.post_and_print %}Post and Print service: {{wallet.post_and_print}}{%endif%}
-</div>
+        <div class="column">
+            <div class="ui large message">
+                Bitstamp {% trans "rate" %}: {{ wallet.rate }}<br/>
+                {% if wallet.divide_by %}
+                    {% trans "Value" %}: {{ wallet.divide_currency_sign }}{{ wallet.divide_by|floatformat:"0"}},
+                    {% trans "Quantity" %}: {{ wallet.quantity }}<br/>
+                {% endif %}
+                {% trans "Donation to" %} bctip: {{ wallet.price|floatformat:"0"}}%
+                {% if wallet.post_and_print %}Post and Print service: {{ wallet.post_and_print }}{% endif %}
+            </div>
 
-<div class="ui huge segment">
-{% if wallet.divide_by %}
- <b>{{wallet.invoice|btc}} BTC</b>
-{% else %}
- <b>Any amount of Bitcoins</b>
-{% endif %}
-<br/>{% trans "to address" %}<br/><a href="{{wallet.bcaddr_uri}}">{{wallet.bcaddr}}</a>
-</div>
+            <div class="ui huge segment" style="word-wrap: break-word;">
+                {% if wallet.divide_by %}
+                    <b>{{ wallet.invoice|btc }} BTC</b>
+                {% else %}
+                    <b>Any amount of Bitcoins</b>
+                {% endif %}
+                <br/>{% trans "to address" %}<br/>
+                <a href="{{ wallet.bcaddr_uri }}">{{ wallet.bcaddr }}</a>
+            </div>
 
-<div class="ui large blue label">
-{% trans "Payment status" %}: <span id="status">{% trans "wait" %}...</span></div>
+            <div class="ui large blue label">
+                {% trans "Payment status" %}: <span id="status">{% trans "wait" %}...</span></div>
 
-</div><div class="column">
-<div class="ui segment">
-<img src="/qrcode/{{wallet.key}}/" class="ui image" />
-</div>
-</div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <img src="/qrcode/{{ wallet.key }}/" class="ui image"/>
+            </div>
+        </div>
 
-</div>
+    </div>
 {% endlocalize %}
 
-<script>
-function wajax() {
- $('#status').html('{% trans "Checking" %}...');
- var request = $.ajax({
-   url: "./wajax/",
-   type: "GET"
+    <script>
+        function wajax() {
+            $('#status').html('{% trans "Checking" %}...');
+            var request = $.ajax({
+                url: "./wajax/",
+                type: "GET"
   });
   
   request.done(function(msg) {

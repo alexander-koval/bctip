@@ -7,7 +7,12 @@ bctip/local_settings.py
 bctip/settings.py
 
 Pipfile.lock
+stunnel.conf
+stunnel.log
 
 .idea/
+/core/migrations/
 /core/static/img/
 /core/templates-odt/
+/static/
+/certs/

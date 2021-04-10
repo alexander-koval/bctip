@@ -1,14 +1,11 @@
 {% extends "base.html" %}{% load i18n %}{% load l10n %}
-{% block header %}
-    <script type="text/javascript" src="/core/static/js/qrcode.min.js"></script>
-{% endblock %}
+
 {% block content %}
 
     {% trans "Current" %} {% trans "rate" %} (Bitstamp): ${{ wallet.rate|floatformat:"2"}}
     <br/><br/>
 
-    <div id="invoice"></div>
-    <form action="" method="post" class="ui large form" id="new_wallet_form">{% csrf_token %}
+    <form action="" method="post" class="ui large form">{% csrf_token %}
         {{ form.non_field_errors }}
 
         {#  <div class="required field">#}
@@ -40,77 +37,82 @@
                 <div class="field"><label>{% trans "Expiration" %}</label>
                     {{ form.expiration.errors }}
                     {{ form.expiration }}
-  </div>
-  <br/>
-  <div class="field"><label>{% trans "Template" %}</label>
-    {{ form.template.errors }}
-    {{ form.template }}
-    {% if not custom_saveatpurse %}
-    <div class="ui small label hidden nice_label">{% trans "Nice Label" %} +0.0001 BTC</div>
-    {% endif %}</div>
+                </div>
+                <br/>
+                <div class="field"><label>{% trans "Template" %}</label>
+                    {{ form.template.errors }}
+                    {{ form.template }}
+                    {% if not custom_saveatpurse %}
+                        <div class="ui small label hidden nice_label">{% trans "Nice Label" %} +0.0001 BTC</div>
+                    {% endif %}</div>
 
-<div class="field"><label>{% trans "Message" %}</label>
- {{ form.message.errors }}
- {{ form.message }}
- <div class="ui small label">{% trans "is printed in the center of every tip" %}</div></div>
+                <div class="field"><label>{% trans "Message" %}</label>
+                    {{ form.message.errors }}
+                    {{ form.message }}
+                    <div class="ui small label">{% trans "is printed in the center of every tip" %}</div>
+                </div>
 
-<div class="field"><label>{% trans "Email" %}</label>
- {{ form.email.errors }}
- {{ form.email }}
-<div class="ui small label">{% trans "for activation notifications" %}</div>
-</div>
+                <div class="field"><label>{% trans "Email" %}</label>
+                    {{ form.email.errors }}
+                    {{ form.email }}
+                    <div class="ui small label">{% trans "for activation notifications" %}</div>
+                </div>
 
-</div><div class="column">
-  <div class="field"><label>{% trans "Donate to" %} bctip{% if request.LANGUAGE_CODE == "fi" %}ille{%endif%}</label>
-    {{ form.price.errors }}
-    {{ form.price }}
-  </div>
-
-
-<table class="ui table"><thead>
- <th>{% trans "Service" %}</th>
- <th>{% trans "Amount" %}</th>
-</thead>
-
-<tbody><tr>
- <td>{% trans "Tips" %}</td>
-    <td><span id="tips_usd" style="font-weight:bold"></span></td>
-</tr>
-<tr>
-    <td>
-        <!--{% trans "Print and Post service" %}</td><td><span id="pap_usd" style="font-weight:bold">$0</span></td>
-</tr><tr><td>-->
-        {% trans "Our humble tips" %}</td>
-    <td><span id="price_usd" style="font-weight:bold"></span></td>
-</tr>
-<tr>
-    <td>
-        {% trans "Premium Template" %}</td>
-    <td><span id="premium_extra" style="font-weight:bold">0</span></td>
-</tr>
-<tr>
-    <td>
-        {% trans "Transaction Fees" %}</td>
-    <td><span id="transes_btc" style="font-weight:bold">0.0 BTC</span></td>
-</tr>
-<tr>
-    <td colspan="2" style="text-align:right">
-        <!--{% trans "Total" %} <span id="total_sign">USD</span><br/><span id="total_usd" style="font-size:150%;font-weight:bold"></span>
- <br/>-->
-        {% trans "Total" %} BTC<br/><span id="total_btc" style="font-size:150%;font-weight:bold"></span>
-    </td>
-</tr>
-</tbody>
-</table>
-
-
-            <div class="text-center">
-                {#    <button class="ui fluid green button">Checkout</button>#}
-                <input type="submit" class="ui fluid green button" value="{% trans "Checkout" %}"/>
             </div>
+            <div class="column">
+                <div class="field"><label>{% trans "Donate to" %} bctip{% if request.LANGUAGE_CODE == "fi" %}
+                    ille{% endif %}</label>
+                    {{ form.price.errors }}
+                    {{ form.price }}
+                </div>
 
 
-        </div>
+                <table class="ui table">
+                    <thead>
+                    <th>{% trans "Service" %}</th>
+                    <th>{% trans "Amount" %}</th>
+                    </thead>
+
+                    <tbody>
+                    <tr>
+                        <td>{% trans "Tips" %}</td>
+                        <td><span id="tips_usd" style="font-weight:bold"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <!--{% trans "Print and Post service" %}</td><td><span id="pap_usd" style="font-weight:bold">$0</span></td>
+</tr><tr><td>-->
+                            {% trans "Our humble tips" %}</td>
+                        <td><span id="price_usd" style="font-weight:bold"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% trans "Premium Template" %}</td>
+                        <td><span id="premium_extra" style="font-weight:bold">0</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% trans "Transaction Fees" %}</td>
+                        <td><span id="transes_btc" style="font-weight:bold">0.0 BTC</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align:right">
+                            <!--{% trans "Total" %} <span id="total_sign">USD</span><br/><span id="total_usd" style="font-size:150%;font-weight:bold"></span>
+ <br/>-->
+                            {% trans "Total" %} BTC<br/><span id="total_btc"
+                                                              style="font-size:150%;font-weight:bold"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+
+                <div class="text-center"><input type="submit" class="ui fluid green button"
+                                                value="{% trans "Checkout" %}"/>
+                </div>
+
+
+            </div>
             <div class="center aligned column">
                 <div class="ui bottom pointing label">{% trans "preview" %}</div>
                 <img class="ui fluid bordered image" id="preview"
@@ -118,31 +120,11 @@
             </div>
 
         </div>
+
+
     </form>
 
-    <div class="ui modal">
-        <i class="close icon"></i>
-        <div class="header">
-            Profile Picture
-        </div>
-        <div class="image content">
-            <div class="description">
-                <div class="ui header">We've auto-chosen a profile image for you.</div>
-                <p>We've grabbed the following image from the <a href="https://www.gravatar.com" target="_blank">gravatar</a>
-                    image associated with your registered e-mail address.</p>
-                <p>Is it okay to use this photo?</p>
-            </div>
-        </div>
-        <div class="actions">
-            <div class="ui black deny button">
-                Nope
-            </div>
-            <div class="ui positive right labeled icon button">
-                Yep, that's me
-                <i class="checkmark icon"></i>
-            </div>
-        </div>
-    </div>
+
 
     <!--
 <h3>Optional Settings:</h3>
@@ -221,37 +203,6 @@
         var rate = {{wallet.rate}};
         console.log(rate);
 
-
-        $('#new_wallet_form').on("submit", function (event) {
-            event.preventDefault()
-            $.ajax({
-                url: "ajax/invoice/",
-                type: "POST",
-                data: $(this).serialize(),
-                success: function (response) {
-                    console.log(response)
-                    new QRCode($('#invoice').response['payment_request'])
-                }
-            });
-        });
-
-        {#$('#new_wallet_form').submit(function (event) {#}
-        {#    event.preventDefault()#}
-        {#    $.ajax({#}
-        {#        url: "/ajax/new_wallet/",#}
-        {#        type: "POST",#}
-        {#        data:  this.serialize(),#}
-        {#        success: function (response) {#}
-        {#            console.log("SUCCESS")#}
-        {#        }#}
-        {#    });#}
-        {#});#}
-
-        //$('.button').on('click', function show_qr(event) {
-        //    event.preventDefault();
-        //    $('.ui.modal').modal('show');
-        //});
-
         function recalc() {
             var cur = $('[name="divide_currency"]').val();
             $('#total_sign').html(cur)
@@ -270,25 +221,25 @@
             var quantity = parseInt($('#id_quantity').val());
             var price = parseFloat($('[name=price]').val());
             var transes = quantity *{{est_fee}};
- var sum = quantity*divide_by;
- var total_usd=sum;
+            var sum = quantity * divide_by;
+            var total_usd = sum;
 
- $('#tips_usd').html(cur_sign+sum);
- /* -------------------- */
- if (pap_checked) {
-   var pap_total = quantity/10*1+2;
-   $('#pap_usd').html("$"+pap_total);
-   total_usd=total_usd+pap_total;
- }
- /* -------------------- */
+            $('#tips_usd').html(cur_sign + sum);
+            /* -------------------- */
+            if (pap_checked) {
+                var pap_total = quantity / 10 * 1 + 2;
+                $('#pap_usd').html("$" + pap_total);
+                total_usd = total_usd + pap_total;
+            }
+            /* -------------------- */
 
- if (price>0) {
-  var price_usd = sum * price / 100;
-  $('#price_usd').html(cur_sign+price_usd.toFixed(2));
-  total_usd=total_usd+price_usd;
- } else {
-  $('#price_usd').html(cur_sign+"0");
- }
+            if (price > 0) {
+                var price_usd = sum * price / 100;
+                $('#price_usd').html(cur_sign + price_usd.toFixed(2));
+                total_usd = total_usd + price_usd;
+            } else {
+                $('#price_usd').html(cur_sign + "0");
+            }
 
 
  /* -------------------- */

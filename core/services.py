@@ -48,7 +48,6 @@ def pay_invoice(wallet_id: int,
                 description: str = "") -> str:
     temp_id: str = f"temp_{shortuuid.uuid()}"
     internal_id: str = f"internal_{shortuuid.uuid()}"
-
     invoice: Invoice = bolt11.decode(payment_request)
     if invoice.amount_msat == 0:
         raise ValueError("Amountless invoices not supported.")
@@ -98,7 +97,8 @@ def pay_invoice(wallet_id: int,
         ln_payment: PaymentResponse = WALLET.pay_invoice(payment_request)
         if ln_payment.ok and ln_payment.checking_id:
             Payment.objects.create(checking_id=ln_payment.checking_id, fee=ln_payment.fee_msat,
-                                   preimage=ln_payment.preimage, **payment_kwargs)
+                                   preimage=ln_payment.preimage, pending=False, **payment_kwargs)
+            Payment.objects.filter(checking_id=temp_id).delete()
         else:
             Payment.objects.filter(checking_id=temp_id).delete()
             raise Exception(payment.error_message or "Failed to pay_invoice on backend")

@@ -6,14 +6,14 @@ import pickle
 import random
 import time
 # import bitcoin
-from io import StringIO
+from http import HTTPStatus
+from io import BytesIO
 
 import qrcode
 from django.core.mail import send_mail
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 # if settings.BCTIP_MOD:
@@ -197,81 +197,86 @@ def get_wallet(request, key):
             # wallet.get_absolute_url()
             return HttpResponseRedirect(reverse('wallet', kwargs={'key': wallet.key}))
 
-    # if request.POST:
-    #     form = WalletForm(request.POST)
-    #     if form.is_valid():
-    #         wallet.bcaddr_from = form.cleaned_data['bcaddr_from']
-    #         wallet.divide_by = form.cleaned_data['divide_by']
-    #         wallet.quantity = form.cleaned_data['quantity']
-    #         wallet.price = form.cleaned_data['price']
-    #         wallet.message = form.cleaned_data['message']
-    #         wallet.template = form.cleaned_data['template']
-    #         wallet.divide_currency = form.cleaned_data['divide_currency']
-    #         # request.form.cleaned_data['target_language']
-    #         wallet.target_language = request.LANGUAGE_CODE
-    #         wallet.email = form.cleaned_data['email']
-    #         wallet.expiration = form.cleaned_data['expiration']
-    #
-    #         total_usd = wallet.divide_by*Decimal(wallet.quantity)  # pure tips
-    #         # tips and price for service
-    #         total_usd = total_usd+total_usd/Decimal(100)*wallet.price
-    #
-    #         if form.cleaned_data['print_and_post']:
-    #             wallet.print_and_post = True
-    #             pap_total = 2+wallet.quantity/9.0*1  # 2 + 1 for each sheet
-    #             total_usd += Decimal(pap_total)
-    #             a = Address(wallet=wallet)
-    #             a.address1 = form.cleaned_data['address1']
-    #             a.address2 = form.cleaned_data['address2']
-    #             a.city = form.cleaned_data['city']
-    #             a.state = form.cleaned_data['state']
-    #             a.country = form.cleaned_data['country']
-    #             a.postal_code = form.cleaned_data['postal_code']
-    #             a.save()  # чу-чо!
-    #         wallet.invoice = total_usd/wallet.rate / \
-    #             Decimal(
-    #                 CURRENCY_RATES[wallet.divide_currency])*Decimal(1e8)  # usd->btc
-    #         wallet.fee = Decimal("%.8f" % get_est_fee())
-    #         wallet.invoice += Decimal(wallet.quantity) * \
-    #             Decimal("%.8f" % round(get_est_fee()/3, 8)) * Decimal(1e8)
-    #         # premium template extra
-    #         if wallet.template == "005-premium.odt":
-    #             wallet.invoice += Decimal(0.0001)*Decimal(1e8)
-    #         wallet.bcaddr = BITCOIND.getnewaddress(wallet.get_account())
-    #         # wallet.bcaddr_segwit = BITCOIND.addwitnessaddress(wallet.bcaddr)
-    #         isvalid = BITCOIND.validateaddress(wallet.bcaddr_from)['isvalid']
-    #         wallet.save()
-    #         generate_tips(wallet)
-    #         celery_generate_pdf.delay(wallet.id)
-    #         response = HttpResponseRedirect(
-    #             reverse('wallet', kwargs={'key': wallet.key}))
-    #         if wallet.email:
-    #             email = pickle.dumps(wallet.email, protocol=0)
-    #             response.set_cookie('email', email)
-    #         response.set_cookie('bcaddr_from', wallet.bcaddr_from)
-    #         return response
-    # else:
-    initial = {'divide_currency': 'USD', 'divide_by': 5, 'quantity': 10, 'price':
-        "5", "template": '001-original', "message": _('Thank you for your service!')}
-    email = request.COOKIES.get('email')
-    if email:
-        try:
-            email = pickle.loads(email)
-        except:
-            pass
-        initial['email'] = email
-    bcaddr_from = request.COOKIES.get('bcaddr_from')
-    if bcaddr_from:
-        initial['bcaddr_from'] = bcaddr_from
+    if request.POST:
+        form = WalletForm(request.POST)
+        if form.is_valid():
+            # wallet.bcaddr_from = form.cleaned_data['bcaddr_from']
+            wallet.divide_by = form.cleaned_data['divide_by']
+            wallet.quantity = form.cleaned_data['quantity']
+            wallet.price = form.cleaned_data['price']
+            wallet.message = form.cleaned_data['message']
+            wallet.template = form.cleaned_data['template']
+            wallet.divide_currency = form.cleaned_data['divide_currency']
+            # request.form.cleaned_data['target_language']
+            wallet.target_language = request.LANGUAGE_CODE
+            wallet.email = form.cleaned_data['email']
+            wallet.expiration = form.cleaned_data['expiration']
 
-    form = WalletForm(initial=initial)
+            total_usd = wallet.divide_by * Decimal(wallet.quantity)  # pure tips
+            # tips and price for service
+            total_usd = total_usd + total_usd / Decimal(100) * wallet.price
 
-    ctx['form'] = form
-    ctx['est_fee'] = Decimal("%.8f" % round(get_est_fee() / 3, 8))
-    if wallet.bcaddr and not wallet.atime:
-        return arender(request, 'wallet-new-unpaid%s.html' % template_mod, ctx)
+            if form.cleaned_data['print_and_post']:
+                wallet.print_and_post = True
+                pap_total = 2 + wallet.quantity / 9.0 * 1  # 2 + 1 for each sheet
+                total_usd += Decimal(pap_total)
+                a = Address(wallet=wallet)
+                a.address1 = form.cleaned_data['address1']
+                a.address2 = form.cleaned_data['address2']
+                a.city = form.cleaned_data['city']
+                a.state = form.cleaned_data['state']
+                a.country = form.cleaned_data['country']
+                a.postal_code = form.cleaned_data['postal_code']
+                a.save()  # чу-чо!
+            wallet.invoice = total_usd / wallet.rate / \
+                             Decimal(
+                                 CURRENCY_RATES[wallet.divide_currency]) * Decimal(1e8)  # usd->btc
+            wallet.fee = Decimal("%.8f" % get_est_fee())
+            wallet.invoice += Decimal(wallet.quantity) * \
+                              Decimal("%.8f" % round(get_est_fee() / 3, 8)) * Decimal(1e8)
+            # premium template extra
+            if wallet.template == "005-premium.odt":
+                wallet.invoice += Decimal(0.0001) * Decimal(1e8)
+            # wallet.bcaddr = BITCOIND.getnewaddress(wallet.get_account())
+            # wallet.bcaddr_segwit = BITCOIND.addwitnessaddress(wallet.bcaddr)
+            # isvalid = BITCOIND.validateaddress(wallet.bcaddr_from)['isvalid']
+            payment_hash, payment_request = services.create_invoice(wallet_id=wallet.id, amount=int(wallet.invoice),
+                                                                    memo=wallet.message)
+            wallet.bcaddr = payment_request
+            wallet.save()
+
+            # wallet.save()
+            generate_tips(wallet)
+            celery_generate_pdf.delay(wallet.id)
+            response = HttpResponseRedirect(
+                reverse('wallet', kwargs={'key': wallet.key}))
+            if wallet.email:
+                email = pickle.dumps(wallet.email, protocol=0)
+                response.set_cookie('email', email)
+            response.set_cookie('bcaddr_from', wallet.bcaddr_from)
+            return response
     else:
-        return arender(request, 'wallet-new%s.html' % template_mod, ctx)
+        initial = {'divide_currency': 'USD', 'divide_by': 5, 'quantity': 10, 'price':
+            "5", "template": '001-original', "message": _('Thank you for your service!')}
+        email = request.COOKIES.get('email')
+        if email:
+            try:
+                email = pickle.loads(email)
+            except:
+                pass
+            initial['email'] = email
+        bcaddr_from = request.COOKIES.get('bcaddr_from')
+        if bcaddr_from:
+            initial['bcaddr_from'] = bcaddr_from
+
+        form = WalletForm(initial=initial)
+
+        ctx['form'] = form
+        ctx['est_fee'] = Decimal("%.8f" % round(get_est_fee() / 3, 8))
+        if wallet.bcaddr and not wallet.atime:
+            return arender(request, 'wallet-new-unpaid%s.html' % template_mod, ctx)
+        else:
+            return arender(request, 'wallet-new%s.html' % template_mod, ctx)
 
 
 def wajax(request, key):  # no processing here, just a period checking
@@ -287,10 +292,11 @@ def wajax(request, key):  # no processing here, just a period checking
 
 
 def qrcode_view(request, key):
-    wallet = get_object_or_404(Wallet, key=key)
+    # wallet = get_object_or_404(Wallet, key=key)
+    wallet = Wallet.objects.get(key=key)
     img = qrcode.make(
         wallet.bcaddr_uri, box_size=6, error_correction=qrcode.ERROR_CORRECT_M)
-    output = StringIO()
+    output = BytesIO()
     img.save(output, "PNG")
     c = output.getvalue()
     return HttpResponse(c, content_type="image/png")
@@ -402,8 +408,8 @@ def tips_example(request):
 def ajax_lightning_invoice(request, key):
     form = WalletForm(request.POST)
     if form.is_valid():
-        # wallet = Wallet.objects.get(key=key)
-        wallet = get_object_or_404(Wallet, key)
+        wallet = Wallet.objects.get(key=key)
+        # wallet = get_object_or_404(Wallet, key)
         # wallet.bcaddr_from = form.cleaned_data['bcaddr_from']
         wallet.divide_by = form.cleaned_data['divide_by']
         wallet.quantity = form.cleaned_data['quantity']
@@ -459,3 +465,34 @@ def ajax_lightning_invoice(request, key):
             "payment_request": payment_request,
         }))
     return HttpResponse("FAIL")
+
+
+def ajax_link_create_or_update(request, link_id=None):
+    is_unique = request.POST.get('is_unique')
+    wait_time = request.POST.get('wait_time')
+    uses = request.POST.get('uses')
+    title = request.POST.get('title')
+    min_withdrawable = request.POST.get('min_withdrawable')
+    max_withdrawable = request.POST.get('max_withdrawable')
+    key_value = request.headers.get("X-Api-Key") or request.args['api_key']
+
+    uses_csv = ""
+    for i in range(uses):
+        if is_unique:
+            uses_csv += "," + str(i + 1)
+        else:
+            uses_csv += "," + str(1)
+    uses_csv = uses_csv[1:]
+
+    if link_id:
+        try:
+            link = WithdrawLink.objects.get(uuid=link_id)
+        except WithdrawLink.DoesNotExist:
+            return HttpResponse(json.dumps({"message: Withdraw link does not exist"}), status=HTTPStatus.NOT_FOUND)
+        if link.wallet.id != key_value:
+            return HttpResponse(json.dumps({"message: Not your withdraw link"}), status=HTTPStatus.FORBIDDEN)
+        # TODO UPDATE
+    else:
+        link = WithdrawLink.objects.create(wallet_id=key_value, **request.POST, uses_csv=uses_csv)
+
+    return HttpResponse(json.dumps({"lnurl": link.lnurl}))
