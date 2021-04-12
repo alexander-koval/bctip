@@ -1,39 +1,49 @@
 {% extends "base.html" %}{% load i18n %}{% load bitcoin %}
 
 {% block content %}
-<h1 class="ui header">{% trans "Your Wallet" %}
-<div class="sub header">
-    {% trans "Paid on" %} {{wallet.atime}}
-</div></h1>
+    <h1 class="ui header">{% trans "Your Wallet" %}
+        <div class="sub header">
+            {% trans "Paid on" %} {{ wallet.atime }}
+        </div>
+    </h1>
 
-<div class="ui two column stackable grid">
+    <div class="ui two column stackable grid">
 
-<div class="ui column">
-<div class="ui message">
-{% trans "BCTip value" %}: {{wallet.divide_currency_sign}}{{wallet.divide_by|floatformat:"0"}}
-<br/>{% trans "Quantity" %}: {{wallet.quantity}}<br/>
-{% trans "Template" %}: {{wallet.template}} [{{wallet.target_language}}]<br/>
-{% trans "Message" %}: {{wallet.message}}
-<br/><br/>
+        <div class="ui column">
+            <div class="ui message">
+                {% trans "BCTip value" %}: {{ wallet.divide_currency_sign }}{{ wallet.divide_by|floatformat:"0"}}
+                <br/>{% trans "Quantity" %}: {{ wallet.quantity }}<br/>
+                {% trans "Template" %}: {{ wallet.template }} [{{ wallet.target_language }}]<br/>
+                {% trans "Message" %}: {{ wallet.message }}
+                <br/><br/>
 
-{% trans "Your bitcoin address" %}: <a href="bitcoin:{{wallet.bcaddr_from}}">{{wallet.bcaddr_from}}</a><br/>
+                <!--{% trans "Your bitcoin address" %}: <a href="bitcoin:{{wallet.bcaddr_from}}">{{wallet.bcaddr_from}}</a><br/>#} -->
 
-{% trans "Email" %}: <a href="mailto:{{wallet.email}}">{{wallet.email}}</a><br/>
-{% if wallet.post_and_print %}{% trans "Print and Post service" %}: {{wallet.post_and_print}}<br/>{%endif%}
+                {% trans "Email" %}: <a href="mailto:{{ wallet.email }}">{{ wallet.email }}</a><br/>
+                {% if wallet.post_and_print %}{% trans "Print and Post service" %}: {{ wallet.post_and_print }}
+                    <br/>{% endif %}
 
-<!--Hashtag: {% if wallet.hashtag %}{{wallet.hashtag}}{% else %}<i>not set</i>{%endif%}<br/><br/>-->
-</div>
-</div>
+                <!--Hashtag: {% if wallet.hashtag %}{{wallet.hashtag}}{% else %}<i>not set</i>{%endif%}<br/><br/>-->
+            </div>
+        </div>
 
 
-<div class="ui column">
-<div class="ui fluid vertical menu">
- <a class="item" href="./pdf/"><i class="download icon"></i>{% trans "Download" %}<div class="ui green label">PDF A4</div></a></a>
-  <a class="item" href="./pdf-us/"><i class="download icon"></i></i>{% trans "Download" %} <div class="ui label">PDF US Letter</div></a>
- <a class="item" href="./png/"><i class="download icon"></i>{% trans "Download" %} <div class="ui green label">PNG</div></a>
-  <a class="item" href="./odt/"><i class="download icon"></i>{% trans "Download" %} <div class="ui label">ODT</div></a>
+        <div class="ui column">
+            <div class="ui fluid vertical menu">
+                <a class="item" href="./pdf/"><i class="download icon"></i>{% trans "Download" %}
+                    <div class="ui green label">PDF A4</div>
+                </a></a>
+                <a class="item" href="./pdf-us/"><i class="download icon"></i></i>{% trans "Download" %}
+                    <div class="ui label">PDF US Letter</div>
+                </a>
+                <a class="item" href="./png/"><i class="download icon"></i>{% trans "Download" %}
+                    <div class="ui green label">PNG</div>
+                </a>
+                <a class="item" href="./odt/"><i class="download icon"></i>{% trans "Download" %}
+                    <div class="ui label">ODT</div>
+                </a>
 
-</div>
+            </div>
 </div>
 
 </div>

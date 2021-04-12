@@ -14,6 +14,7 @@ from django.core.mail import send_mail
 from django.db.models import Sum
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 # if settings.BCTIP_MOD:
@@ -24,7 +25,6 @@ from core.forms import *
 from core.models import *
 from core.services import get_wallet_balance
 from core.tasks import celery_generate_pdf
-from lnbits import bolt11
 
 BASE10 = '1234567890'
 BASE58 = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -53,7 +53,8 @@ def generate_tips(wallet):
             key += "%s-" % get_random_key(length=4)
         key = key.lower()[:-1]
         Tip.objects.create(
-            wallet=wallet, key=key,
+            wallet=wallet,
+            key=key,
             etime=datetime.datetime.now() + datetime.timedelta(days=wallet.expiration),
             balance=quant)
     return True
@@ -328,10 +329,9 @@ def tip(request, key):
             tip.ua = request.META.get('HTTP_USER_AGENT')
             tip.save()
 
-            payment_hash = services.pay_invoice(wallet_id=tip.wallet_id,
-                                                payment_request=tip.bcaddr,
-                                                max_sat=tip.balance)
-            print(payment_hash)
+            tip.txid = services.pay_invoice(wallet_id=tip.wallet_id,
+                                            payment_request=tip.bcaddr,
+                                            max_sat=tip.balance)
             tip.activated = True
             # BITCOIND.settxfee(tip.wallet.txfee_float)
             # tip.txid = BITCOIND.sendfrom(
@@ -347,9 +347,9 @@ def tip(request, key):
             tip_bcaddr = tip.bcaddr
     else:
         initial = {'bcamount': tip.balance_btc}
-        tip_bcaddr = request.COOKIES.get('tip_bcaddr')
-        if tip_bcaddr:
-            initial['bcaddr'] = tip_bcaddr
+        # tip_bcaddr = request.COOKIES.get('tip_bcaddr')
+        # if tip_bcaddr:
+        #     initial['bcaddr'] = tip_bcaddr
         form = TipForm(initial=initial)
     ctx = {'tip': tip, 'rate': get_avg_rate(), 'form': form}
     template = "tip.html"
@@ -403,68 +403,6 @@ def tips_example(request):
     template = "tip.html"
     response = render(request, template, ctx)
     return response
-
-
-def ajax_lightning_invoice(request, key):
-    form = WalletForm(request.POST)
-    if form.is_valid():
-        wallet = Wallet.objects.get(key=key)
-        # wallet = get_object_or_404(Wallet, key)
-        # wallet.bcaddr_from = form.cleaned_data['bcaddr_from']
-        wallet.divide_by = form.cleaned_data['divide_by']
-        wallet.quantity = form.cleaned_data['quantity']
-        wallet.price = form.cleaned_data['price']
-        wallet.message = form.cleaned_data['message']
-        wallet.template = form.cleaned_data['template']
-        wallet.divide_currency = form.cleaned_data['divide_currency']
-        # request.form.cleaned_data['target_language']
-        wallet.target_language = request.LANGUAGE_CODE
-        wallet.email = form.cleaned_data['email']
-        wallet.expiration = form.cleaned_data['expiration']
-
-        total_usd = wallet.divide_by * Decimal(wallet.quantity)  # pure tips
-        # tips and price for service
-        total_usd = total_usd + total_usd / Decimal(100) * wallet.price
-
-        if form.cleaned_data['print_and_post']:
-            wallet.print_and_post = True
-            pap_total = 2 + wallet.quantity / 9.0 * 1  # 2 + 1 for each sheet
-            total_usd += Decimal(pap_total)
-            a = Address(wallet=wallet)
-            a.address1 = form.cleaned_data['address1']
-            a.address2 = form.cleaned_data['address2']
-            a.city = form.cleaned_data['city']
-            a.state = form.cleaned_data['state']
-            a.country = form.cleaned_data['country']
-            a.postal_code = form.cleaned_data['postal_code']
-            a.save()  # чу-чо!
-        wallet.invoice = total_usd / wallet.rate / \
-                         Decimal(
-                             CURRENCY_RATES[wallet.divide_currency]) * Decimal(1e8)  # usd->btc
-        wallet.fee = Decimal("%.8f" % get_est_fee())
-        wallet.invoice += Decimal(wallet.quantity) * \
-                          Decimal("%.8f" % round(get_est_fee() / 3, 8)) * Decimal(1e8)
-        # premium template extra
-        if wallet.template == "005-premium.odt":
-            wallet.invoice += Decimal(0.0001) * Decimal(1e8)
-        # wallet.bcaddr = BITCOIND.getnewaddress(wallet.get_account())
-
-        payment_hash, payment_request = services.create_invoice(wallet_id=wallet.id, amount=int(wallet.invoice),
-                                                                memo=wallet.message)
-        wallet.bcaddr = payment_request
-        wallet.save()
-        generate_tips(wallet)
-        celery_generate_pdf.delay(wallet.id)
-        invoice = bolt11.decode(payment_request)
-        print(payment_request)
-        # return HttpResponseRedirect(
-        #         reverse('wallet', kwargs={'key': wallet.key}))
-
-        return HttpResponse(json.dumps({
-            "payment_hash": invoice.payment_hash,
-            "payment_request": payment_request,
-        }))
-    return HttpResponse("FAIL")
 
 
 def ajax_link_create_or_update(request, link_id=None):

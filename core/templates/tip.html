@@ -3,42 +3,44 @@
 
 {% block content %}
 
-{% if tip.expired %}
+    {% if tip.expired %}
 
-<div class="ui warning large message">
-<div class="header">{% trans "Expired" %}</div>
-{% trans "Tip with this URL was expired on" %} {{tip.etime}}.<br/>{% trans "The funds were returned to the owner" %}.</div>
-<div class="ui divider"></div>
-{% endif %}
+        <div class="ui warning large message">
+            <div class="header">{% trans "Expired" %}</div>
+            {% trans "Tip with this URL was expired on" %} {{ tip.etime }}.<br/>{% trans "The funds were returned to the owner" %}.
+        </div>
+        <div class="ui divider"></div>
+    {% endif %}
 
-{% if tip.activated %}
-<h2 class="ui header">{% trans "Tip has been activated" %}</h2>
+    {% if tip.activated %}
+        <h2 class="ui header">{% trans "Tip has been activated" %}</h2>
 
 
-    <div class="ui warning message" style="word-wrap: break-word">
-{% trans "Tip activation time" %}: {{tip.atime}}<br/>
-{% trans "Tip was sent to address" %}: <b>{{tip.bcaddr}}</b><br/>
-{% trans "Transaction ID" %}: <a href="https://blockchain.info/tx/{{tip.txid}}" target="_blank">{{tip.txid|truncatechars:31}}</a><br/>
-</div><br/>
-{% endif %}
+        <div class="ui warning message" style="word-wrap: break-word">
+            {% trans "Tip activation time" %}: {{ tip.atime }}<br/>
+            {% trans "Tip was sent to address" %}: <b>{{ tip.bcaddr }}</b><br/>
+            <!--{% trans "Transaction ID" %}: <a href="https://blockchain.info/tx/{{tip.txid}}" target="_blank">{{tip.txid|truncatechars:31}}</a><br/>-->
+        </div><br/>
+    {% endif %}
 
-<form class="ui form" action="" method="post">
-{% if tips_example %}
-<div class="ui large message">{% trans "Gratuity Example" %}</div>
-{% endif %}
+    <form class="ui form" action="" method="post">
+        {% if tips_example %}
+            <div class="ui large message">{% trans "Gratuity Example" %}</div>
+        {% endif %}
 
-{% if not tip.activated and not tip.expired %}
-<h2 class="ui header">{% trans "You have" %} {{tip.balance_btc}}
-{% if request.LANGUAGE_CODE != "fi" %}{% trans "bitcoins" %}
-{%else%}bitcoinia{%endif%}
+        {% if not tip.activated and not tip.expired %}
+            <h2 class="ui header">{% trans "You have" %} {{ tip.balance_btc }}
+                {% if request.LANGUAGE_CODE != "fi" %}{% trans "bitcoins" %}
+                {% else %}bitcoinia{% endif %}
 
-<div class="sub header">
-{% trans "can be sold for about" %}
-    {{tip.wallet.divide_currency_sign}}{% if tip.wallet.divide_currency == "EUR" %}{{tip.balance_eur|floatformat:"2"}}{% else %}
-    {{tip.balance_usd|floatformat:"2"}}{% endif %}<br/>
-<!--{% trans "Current bitcoin price" %} <a href="https://www.bitstamp.net" target="_blank">1 BTC = USD ${{rate|floatformat:"2"}}</a></div>-->
-</h2>
-{% endif %}
+                <div class="sub header">
+                    {% trans "can be sold for about" %}
+                    {{ tip.wallet.divide_currency_sign }}{% if tip.wallet.divide_currency == "EUR" %}
+                        {{ tip.balance_eur|floatformat:"2"}}{% else %}
+                        {{ tip.balance_usd|floatformat:"2"}}{% endif %}<br/>
+                    <!--{% trans "Current bitcoin price" %} <a href="https://www.bitstamp.net" target="_blank">1 BTC = USD ${{rate|floatformat:"2"}}</a></div>-->
+            </h2>
+        {% endif %}
 
 {% csrf_token %}
 {{ form.non_field_errors }}

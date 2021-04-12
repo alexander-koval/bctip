@@ -23,7 +23,6 @@ urlpatterns = i18n_patterns(
     url(r'^w/(?P<key>\w+)/odt/$', views.download, {'format': "odt"}, name='download'),
     url(r'^w/(?P<key>\w+)/png/$', views.download, {'format': "png"}, name='download'),
     url(r'^w/(?P<key>\w+)/wajax/$', views.wajax, name='wajax'),
-    url(r'^w/(?P<key>\w+)/ajax/invoice/$', views.ajax_lightning_invoice, name='ajax_invoice'),
 )
 
 urlpatterns += [
